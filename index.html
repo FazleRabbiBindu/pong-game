@@ -15,7 +15,7 @@
                 <p id="playerScore">0</p>
             </div>
             <div class="game-status">
-                <p id="gameStatus">Press SPACE or TAP to Start</p>
+                <p id="gameStatus">Press SPACE to Start</p>
             </div>
             <div class="computer-score">
                 <h2>Computer</h2>
@@ -24,18 +24,17 @@
         </div>
         <canvas id="pongCanvas" width="800" height="400"></canvas>
         
-        <!-- Mobile Controls -->
+        <!-- Mobile/Tablet Controls -->
         <div class="mobile-controls" id="mobileControls">
-            <button id="upBtn" class="control-btn">↑ UP</button>
-            <button id="downBtn" class="control-btn">↓ DOWN</button>
             <button id="startBtn" class="control-btn start-btn">START/PAUSE</button>
         </div>
         
         <div class="controls">
-            <p><strong>Desktop:</strong> Use MOUSE or UP/DOWN ARROW keys to move your paddle</p>
-            <p><strong>Mobile:</strong> Tap UP/DOWN buttons to move your paddle</p>
-            <p>Press SPACE or TAP START to start/pause the game</p>
-            <p>Press R or TAP RESET to reset the game</p>
+            <p id="desktopControls"><strong>Desktop:</strong> Use MOUSE or UP/DOWN ARROW keys to move your paddle</p>
+            <p id="mobileControlsText" style="display: none;"><strong>Mobile/Tablet:</strong> Swipe your finger on the game to move your paddle</p>
+            <p id="proximityText" style="display: none;"><strong>Proximity Sensor:</strong> Move your hand closer/farther from screen to control paddle (if available)</p>
+            <p id="startText">Press SPACE or TAP START to start/pause the game</p>
+            <p id="resetText">Press R to reset the game</p>
         </div>
         
         <button id="resetBtn" class="reset-btn">RESET</button>
