@@ -198,6 +198,11 @@ h1 {
     .game-status p {
         font-size: 1.1em;
     }
+
+    #mobileControlsText,
+    #proximityText {
+        display: none !important;
+    }
 }
 
 /* Tablet (Medium screens) */
@@ -292,6 +297,15 @@ h1 {
 
     .controls p {
         margin: 4px 0;
+    }
+
+    #desktopControls {
+        display: none;
+    }
+
+    #mobileControlsText,
+    #proximityText {
+        display: block !important;
     }
 
     .reset-btn {
