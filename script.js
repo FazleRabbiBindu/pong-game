@@ -5,6 +5,7 @@ const ctx = canvas.getContext('2d');
 // Get device type
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 const isTablet = /iPad|Android/i.test(navigator.userAgent) && !/Mobile/i.test(navigator.userAgent);
+const isDesktop = !isMobile && !isTablet;
 
 // Responsive canvas setup
 function setupCanvas() {
@@ -63,110 +64,128 @@ const keys = {
     ArrowUp: false,
     ArrowDown: false,
     mouseY: canvas.height / 2,
-    touchUp: false,
-    touchDown: false
+    touchY: canvas.height / 2,
+    proximityDistance: null
 };
 
-// Mobile controls detection
-function showMobileControls() {
-    const mobileControls = document.getElementById('mobileControls');
-    const resetBtn = document.getElementById('resetBtn');
-    
-    if (isMobile || isTablet) {
-        mobileControls.classList.add('show');
-        resetBtn.classList.add('show');
+// Touch tracking for mobile
+let lastTouchY = null;
+let touchStartY = null;
+
+// Proximity Sensor API (for compatible devices)
+function requestProximitySensor() {
+    if ('ProximitySensor' in window) {
+        try {
+            const sensor = new ProximitySensor();
+            sensor.addEventListener('reading', () => {
+                // Use proximity distance to control paddle
+                // Closer = move up, farther = move down
+                keys.proximityDistance = sensor.distance;
+            });
+            sensor.start();
+        } catch (error) {
+            console.log('Proximity sensor not available:', error);
+        }
     }
 }
 
-// Setup mobile touch controls
+// Request permission for sensors on mobile
+function requestSensorPermission() {
+    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+        DeviceOrientationEvent.requestPermission()
+            .then(permissionState => {
+                if (permissionState === 'granted') {
+                    requestProximitySensor();
+                }
+            })
+            .catch(console.error);
+    } else {
+        // Non-iOS or older devices
+        requestProximitySensor();
+    }
+}
+
+// Mobile controls detection and setup
 function setupMobileControls() {
-    const upBtn = document.getElementById('upBtn');
-    const downBtn = document.getElementById('downBtn');
     const startBtn = document.getElementById('startBtn');
     const resetBtn = document.getElementById('resetBtn');
 
-    // Up button
-    upBtn.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        keys.touchUp = true;
-    });
-    upBtn.addEventListener('touchend', (e) => {
-        e.preventDefault();
-        keys.touchUp = false;
-    });
-    upBtn.addEventListener('mousedown', () => keys.touchUp = true);
-    upBtn.addEventListener('mouseup', () => keys.touchUp = false);
+    if (isMobile || isTablet) {
+        // Show mobile buttons
+        document.getElementById('mobileControls').classList.add('show');
+        resetBtn.classList.add('show');
 
-    // Down button
-    downBtn.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        keys.touchDown = true;
-    });
-    downBtn.addEventListener('touchend', (e) => {
-        e.preventDefault();
-        keys.touchDown = false;
-    });
-    downBtn.addEventListener('mousedown', () => keys.touchDown = true);
-    downBtn.addEventListener('mouseup', () => keys.touchDown = false);
+        // Start button
+        startBtn.addEventListener('click', toggleGameState);
+        startBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            toggleGameState();
+        });
 
-    // Start button
-    startBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        toggleGameState();
-    });
-    startBtn.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        toggleGameState();
+        // Reset button
+        resetBtn.addEventListener('click', resetGame);
+        resetBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            resetGame();
+        });
+
+        // Request proximity sensor permission
+        if (isMobile) {
+            requestSensorPermission();
+        }
+    }
+}
+
+// Desktop controls setup
+function setupDesktopControls() {
+    if (!isDesktop) return;
+
+    // Keyboard events
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowUp') keys.ArrowUp = true;
+        if (e.key === 'ArrowDown') keys.ArrowDown = true;
+        if (e.key === ' ') {
+            e.preventDefault();
+            toggleGameState();
+        }
+        if (e.key === 'r' || e.key === 'R') {
+            resetGame();
+        }
     });
 
-    // Reset button
-    resetBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        resetGame();
+    document.addEventListener('keyup', (e) => {
+        if (e.key === 'ArrowUp') keys.ArrowUp = false;
+        if (e.key === 'ArrowDown') keys.ArrowDown = false;
     });
-    resetBtn.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        resetGame();
+
+    // Mouse events
+    canvas.addEventListener('mousemove', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        keys.mouseY = e.clientY - rect.top;
     });
 }
 
-// Keyboard events
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'ArrowUp') keys.ArrowUp = true;
-    if (e.key === 'ArrowDown') keys.ArrowDown = true;
-    if (e.key === ' ') {
-        e.preventDefault();
-        toggleGameState();
-    }
-    if (e.key === 'r' || e.key === 'R') {
-        resetGame();
-    }
-});
-
-document.addEventListener('keyup', (e) => {
-    if (e.key === 'ArrowUp') keys.ArrowUp = false;
-    if (e.key === 'ArrowDown') keys.ArrowDown = false;
-});
-
-// Mouse events
-canvas.addEventListener('mousemove', (e) => {
-    const rect = canvas.getBoundingClientRect();
-    keys.mouseY = e.clientY - rect.top;
-});
-
-// Touch events for direct canvas touch control (alternative to buttons)
-canvas.addEventListener('touchmove', (e) => {
-    e.preventDefault();
-    const touch = e.touches[0];
-    const rect = canvas.getBoundingClientRect();
-    keys.mouseY = touch.clientY - rect.top;
-});
-
+// Touch events for mobile/tablet (direct canvas touch)
 canvas.addEventListener('touchstart', (e) => {
     e.preventDefault();
     const touch = e.touches[0];
     const rect = canvas.getBoundingClientRect();
-    keys.mouseY = touch.clientY - rect.top;
+    touchStartY = touch.clientY - rect.top;
+    lastTouchY = touch.clientY - rect.top;
+});
+
+canvas.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+    const touch = e.touches[0];
+    const rect = canvas.getBoundingClientRect();
+    keys.touchY = touch.clientY - rect.top;
+    lastTouchY = keys.touchY;
+});
+
+canvas.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    lastTouchY = null;
+    touchStartY = null;
 });
 
 // Game functions
@@ -207,9 +226,17 @@ function resetBall() {
 function updateGameStatus() {
     const statusElement = document.getElementById('gameStatus');
     if (!gameRunning) {
-        statusElement.textContent = isMobile ? 'TAP START' : 'Press SPACE to Start';
+        if (isMobile || isTablet) {
+            statusElement.textContent = 'TAP START BUTTON';
+        } else {
+            statusElement.textContent = 'Press SPACE to Start';
+        }
     } else if (gamePaused) {
-        statusElement.textContent = isMobile ? 'PAUSED' : 'PAUSED - Press SPACE';
+        if (isMobile || isTablet) {
+            statusElement.textContent = 'PAUSED - TAP START';
+        } else {
+            statusElement.textContent = 'PAUSED - Press SPACE';
+        }
     } else {
         statusElement.textContent = 'PLAYING...';
     }
@@ -224,23 +251,32 @@ function updateScoreboard() {
 function movePlayerPaddle() {
     let targetY = playerPaddle.y;
 
-    // Mouse control
-    if (keys.mouseY !== canvas.height / 2) {
+    // Desktop: Mouse control
+    if (isDesktop && keys.mouseY !== canvas.height / 2) {
         targetY = keys.mouseY - paddleHeight / 2;
     }
 
-    // Arrow key control
-    if (keys.ArrowUp) {
-        targetY = playerPaddle.y - paddleSpeed;
-    } else if (keys.ArrowDown) {
-        targetY = playerPaddle.y + paddleSpeed;
+    // Desktop: Arrow key control
+    if (isDesktop) {
+        if (keys.ArrowUp) {
+            targetY = playerPaddle.y - paddleSpeed;
+        } else if (keys.ArrowDown) {
+            targetY = playerPaddle.y + paddleSpeed;
+        }
     }
 
-    // Touch button control
-    if (keys.touchUp) {
-        targetY = playerPaddle.y - paddleSpeed;
-    } else if (keys.touchDown) {
-        targetY = playerPaddle.y + paddleSpeed;
+    // Mobile/Tablet: Touch control
+    if ((isMobile || isTablet) && lastTouchY !== null) {
+        targetY = lastTouchY - paddleHeight / 2;
+    }
+
+    // Mobile: Proximity sensor control (if available)
+    if ((isMobile || isTablet) && keys.proximityDistance !== null) {
+        // Map proximity distance to paddle position
+        // Closer = higher on screen, Farther = lower on screen
+        const maxDistance = 20; // Maximum usable proximity distance in cm
+        const proximityRatio = Math.min(keys.proximityDistance / maxDistance, 1);
+        targetY = proximityRatio * (canvas.height - paddleHeight);
     }
 
     // Constrain paddle within canvas
@@ -248,7 +284,7 @@ function movePlayerPaddle() {
 }
 
 function moveComputerPaddle() {
-    // Simple AI: follow the ball
+    // AI: follow the ball
     const computerCenter = computerPaddle.y + paddleHeight / 2;
     const deadZone = paddleHeight * 0.35;
 
@@ -270,7 +306,7 @@ function checkPaddleCollision(paddle) {
         ball.y - ball.radius < paddle.y + paddle.height &&
         ball.y + ball.radius > paddle.y
     ) {
-        // Calculate collision angle based on where ball hits paddle
+        // Calculate collision angle
         const collidePoint = ball.y - (paddle.y + paddle.height / 2);
         const collideNorm = collidePoint / (paddle.height / 2);
         const bounceAngle = collideNorm * (Math.PI / 4);
@@ -282,7 +318,7 @@ function checkPaddleCollision(paddle) {
         ball.dx = speed * (paddle === playerPaddle ? 1 : -1) * Math.cos(bounceAngle);
         ball.dy = speed * Math.sin(bounceAngle);
 
-        // Prevent ball from getting stuck in paddle
+        // Prevent ball from getting stuck
         if (paddle === playerPaddle) {
             ball.x = paddle.x + paddle.width + ball.radius;
         } else {
@@ -393,7 +429,7 @@ function gameLoop() {
 }
 
 // Initialize
-showMobileControls();
 setupMobileControls();
+setupDesktopControls();
 draw();
 updateGameStatus();
