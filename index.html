@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Pong Game</title>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -11,33 +11,35 @@
         <h1>PONG GAME</h1>
         <div class="scoreboard">
             <div class="player-score">
-                <h2>Player</h2>
+                <h2>You</h2>
                 <p id="playerScore">0</p>
             </div>
             <div class="game-status">
-                <p id="gameStatus">Press SPACE to Start</p>
+                <p id="gameStatus">TAP TO START</p>
             </div>
             <div class="computer-score">
-                <h2>Computer</h2>
+                <h2>AI</h2>
                 <p id="computerScore">0</p>
             </div>
         </div>
         <canvas id="pongCanvas" width="800" height="400"></canvas>
         
-        <!-- Mobile/Tablet Controls -->
+        <!-- Mobile Touchpad Area -->
+        <div id="touchpadContainer" class="touchpad-container">
+            <div class="touchpad" id="touchpad"></div>
+            <p class="touchpad-hint">Swipe up/down to move paddle</p>
+        </div>
+        
+        <!-- Mobile Control Buttons -->
         <div class="mobile-controls" id="mobileControls">
-            <button id="startBtn" class="control-btn start-btn">START/PAUSE</button>
+            <button id="startBtn" class="control-btn start-btn">START</button>
+            <button id="resetBtn" class="control-btn reset-btn">RESET</button>
         </div>
         
-        <div class="controls">
-            <p id="desktopControls"><strong>Desktop:</strong> Use MOUSE or UP/DOWN ARROW keys to move your paddle</p>
-            <p id="mobileControlsText" style="display: none;"><strong>Mobile/Tablet:</strong> Swipe your finger on the game to move your paddle</p>
-            <p id="proximityText" style="display: none;"><strong>Proximity Sensor:</strong> Move your hand closer/farther from screen to control paddle (if available)</p>
-            <p id="startText">Press SPACE or TAP START to start/pause the game</p>
-            <p id="resetText">Press R to reset the game</p>
+        <div class="controls" id="desktopControls">
+            <p><strong>Desktop:</strong> Use MOUSE or UP/DOWN ARROW keys</p>
+            <p>Press SPACE to start/pause • Press R to reset</p>
         </div>
-        
-        <button id="resetBtn" class="reset-btn">RESET</button>
     </div>
     <script src="script.js"></script>
 </body>
