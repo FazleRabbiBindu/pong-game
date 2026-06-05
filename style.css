@@ -4,6 +4,11 @@
     box-sizing: border-box;
 }
 
+html, body {
+    width: 100%;
+    height: 100%;
+}
+
 body {
     display: flex;
     justify-content: center;
@@ -11,14 +16,18 @@ body {
     min-height: 100vh;
     background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
     font-family: 'Arial', sans-serif;
+    padding: 10px;
+    overflow-x: hidden;
 }
 
 .container {
     text-align: center;
     background: rgba(0, 0, 0, 0.7);
-    padding: 30px;
+    padding: 20px;
     border-radius: 20px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    max-width: 95vw;
+    width: 100%;
 }
 
 h1 {
@@ -34,7 +43,7 @@ h1 {
     justify-content: space-around;
     align-items: center;
     margin-bottom: 20px;
-    gap: 20px;
+    gap: 10px;
 }
 
 .player-score,
@@ -66,7 +75,7 @@ h1 {
 
 .game-status p {
     color: #00ff88;
-    font-size: 1.1em;
+    font-size: 1em;
     font-weight: bold;
 }
 
@@ -77,13 +86,95 @@ h1 {
     margin: 20px auto;
     cursor: none;
     box-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+    width: 100%;
+    max-width: 800px;
+    height: auto;
+    aspect-ratio: 2 / 1;
+    touch-action: none;
+}
+
+/* Mobile Controls */
+.mobile-controls {
+    display: none;
+    gap: 10px;
+    margin: 20px 0;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.mobile-controls.show {
+    display: flex;
+}
+
+.control-btn {
+    padding: 15px 20px;
+    font-size: 1em;
+    font-weight: bold;
+    background: #00ff88;
+    color: #000;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 80px;
+    touch-action: manipulation;
+    user-select: none;
+}
+
+.control-btn:active {
+    background: #00dd77;
+    transform: scale(0.95);
+}
+
+.control-btn:hover {
+    background: #00dd77;
+}
+
+.start-btn {
+    background: #ff006e;
+    color: #fff;
+    min-width: 120px;
+}
+
+.start-btn:active {
+    background: #dd0055;
+}
+
+.start-btn:hover {
+    background: #dd0055;
+}
+
+.reset-btn {
+    padding: 12px 25px;
+    font-size: 1em;
+    font-weight: bold;
+    background: #ffd60a;
+    color: #000;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: none;
+}
+
+.reset-btn.show {
+    display: inline-block;
+}
+
+.reset-btn:active {
+    background: #ffb700;
+    transform: scale(0.95);
+}
+
+.reset-btn:hover {
+    background: #ffb700;
 }
 
 .controls {
     color: #ccc;
-    font-size: 0.9em;
+    font-size: 0.85em;
     margin-top: 20px;
-    line-height: 1.8;
+    line-height: 1.6;
 }
 
 .controls strong {
@@ -94,7 +185,23 @@ h1 {
     margin: 5px 0;
 }
 
-@media (max-width: 768px) {
+/* Tablet and Desktop */
+@media (min-width: 769px) {
+    .container {
+        padding: 30px;
+    }
+
+    h1 {
+        font-size: 2.5em;
+    }
+
+    .game-status p {
+        font-size: 1.1em;
+    }
+}
+
+/* Tablet (Medium screens) */
+@media (max-width: 1024px) and (min-width: 769px) {
     .container {
         padding: 20px;
     }
@@ -104,12 +211,202 @@ h1 {
     }
 
     #pongCanvas {
-        width: 100%;
-        height: auto;
+        max-width: 100%;
+    }
+
+    .controls {
+        font-size: 0.8em;
+    }
+}
+
+/* Mobile (Small screens) */
+@media (max-width: 768px) {
+    body {
+        padding: 5px;
+        align-items: flex-start;
+        padding-top: 10px;
+    }
+
+    .container {
+        padding: 15px;
+        border-radius: 15px;
+        max-width: 100%;
+    }
+
+    h1 {
+        font-size: 1.8em;
+        margin-bottom: 15px;
     }
 
     .scoreboard {
-        flex-direction: column;
-        gap: 10px;
+        gap: 8px;
+        margin-bottom: 15px;
+    }
+
+    .player-score h2,
+    .computer-score h2 {
+        font-size: 1em;
+        margin-bottom: 5px;
+    }
+
+    .player-score p,
+    .computer-score p {
+        font-size: 1.5em;
+    }
+
+    .game-status {
+        padding: 8px;
+        border-radius: 8px;
+    }
+
+    .game-status p {
+        font-size: 0.9em;
+    }
+
+    #pongCanvas {
+        margin: 15px auto;
+        max-width: 100%;
+    }
+
+    .mobile-controls.show {
+        display: flex;
+        gap: 8px;
+    }
+
+    .control-btn {
+        padding: 12px 15px;
+        font-size: 0.9em;
+        min-width: 70px;
+        border-radius: 8px;
+    }
+
+    .start-btn {
+        min-width: 100px;
+    }
+
+    .controls {
+        font-size: 0.75em;
+        margin-top: 15px;
+        line-height: 1.4;
+    }
+
+    .controls p {
+        margin: 4px 0;
+    }
+
+    .reset-btn {
+        padding: 10px 20px;
+        font-size: 0.9em;
+        margin-top: 10px;
+        border-radius: 8px;
+    }
+}
+
+/* Extra small screens */
+@media (max-width: 480px) {
+    body {
+        padding: 3px;
+        padding-top: 5px;
+    }
+
+    .container {
+        padding: 10px;
+        border-radius: 12px;
+    }
+
+    h1 {
+        font-size: 1.5em;
+        margin-bottom: 10px;
+        letter-spacing: 2px;
+    }
+
+    .scoreboard {
+        gap: 5px;
+        margin-bottom: 10px;
+    }
+
+    .player-score h2,
+    .computer-score h2 {
+        font-size: 0.85em;
+        margin-bottom: 3px;
+    }
+
+    .player-score p,
+    .computer-score p {
+        font-size: 1.3em;
+    }
+
+    .game-status p {
+        font-size: 0.8em;
+    }
+
+    .mobile-controls.show {
+        gap: 5px;
+    }
+
+    .control-btn {
+        padding: 10px 12px;
+        font-size: 0.8em;
+        min-width: 60px;
+    }
+
+    .start-btn {
+        min-width: 90px;
+    }
+
+    .controls {
+        font-size: 0.7em;
+        margin-top: 10px;
+        line-height: 1.3;
+    }
+
+    .controls p {
+        margin: 3px 0;
+    }
+}
+
+/* Prevent text selection on buttons during gameplay */
+.control-btn,
+.reset-btn {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Landscape orientation for mobile */
+@media (max-height: 600px) and (orientation: landscape) {
+    body {
+        min-height: 100vh;
+        padding: 3px;
+    }
+
+    .container {
+        padding: 10px;
+    }
+
+    h1 {
+        font-size: 1.3em;
+        margin-bottom: 8px;
+    }
+
+    .scoreboard {
+        gap: 5px;
+        margin-bottom: 8px;
+    }
+
+    .player-score p,
+    .computer-score p {
+        font-size: 1.2em;
+    }
+
+    .control-btn {
+        padding: 8px 12px;
+        font-size: 0.75em;
+    }
+
+    .controls {
+        font-size: 0.65em;
+        margin-top: 8px;
     }
 }
