@@ -2,19 +2,36 @@
 const canvas = document.getElementById('pongCanvas');
 const ctx = canvas.getContext('2d');
 
+// Get device type
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+const isTablet = /iPad|Android/i.test(navigator.userAgent) && !/Mobile/i.test(navigator.userAgent);
+
+// Responsive canvas setup
+function setupCanvas() {
+    const containerWidth = canvas.parentElement.clientWidth;
+    const maxWidth = Math.min(containerWidth * 0.95, 800);
+    const aspectRatio = 2;
+    
+    canvas.width = maxWidth;
+    canvas.height = maxWidth / aspectRatio;
+}
+
+setupCanvas();
+window.addEventListener('resize', setupCanvas);
+
 // Game variables
-const paddleWidth = 15;
-const paddleHeight = 100;
-const ballRadius = 8;
-const paddleSpeed = 6;
-const ballSpeedInitial = 5;
+const paddleWidth = canvas.width * 0.02;
+const paddleHeight = canvas.height * 0.25;
+const ballRadius = canvas.width * 0.01;
+const paddleSpeed = canvas.height * 0.015;
+const ballSpeedInitial = canvas.width * 0.006;
 
 let gameRunning = false;
 let gamePaused = false;
 
 // Player paddle (left)
 const playerPaddle = {
-    x: 10,
+    x: canvas.width * 0.01,
     y: canvas.height / 2 - paddleHeight / 2,
     width: paddleWidth,
     height: paddleHeight,
@@ -24,7 +41,7 @@ const playerPaddle = {
 
 // Computer paddle (right)
 const computerPaddle = {
-    x: canvas.width - paddleWidth - 10,
+    x: canvas.width - paddleWidth - canvas.width * 0.01,
     y: canvas.height / 2 - paddleHeight / 2,
     width: paddleWidth,
     height: paddleHeight,
@@ -45,10 +62,75 @@ let ball = {
 const keys = {
     ArrowUp: false,
     ArrowDown: false,
-    mouseY: canvas.height / 2
+    mouseY: canvas.height / 2,
+    touchUp: false,
+    touchDown: false
 };
 
-// Event listeners
+// Mobile controls detection
+function showMobileControls() {
+    const mobileControls = document.getElementById('mobileControls');
+    const resetBtn = document.getElementById('resetBtn');
+    
+    if (isMobile || isTablet) {
+        mobileControls.classList.add('show');
+        resetBtn.classList.add('show');
+    }
+}
+
+// Setup mobile touch controls
+function setupMobileControls() {
+    const upBtn = document.getElementById('upBtn');
+    const downBtn = document.getElementById('downBtn');
+    const startBtn = document.getElementById('startBtn');
+    const resetBtn = document.getElementById('resetBtn');
+
+    // Up button
+    upBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        keys.touchUp = true;
+    });
+    upBtn.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        keys.touchUp = false;
+    });
+    upBtn.addEventListener('mousedown', () => keys.touchUp = true);
+    upBtn.addEventListener('mouseup', () => keys.touchUp = false);
+
+    // Down button
+    downBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        keys.touchDown = true;
+    });
+    downBtn.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        keys.touchDown = false;
+    });
+    downBtn.addEventListener('mousedown', () => keys.touchDown = true);
+    downBtn.addEventListener('mouseup', () => keys.touchDown = false);
+
+    // Start button
+    startBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        toggleGameState();
+    });
+    startBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        toggleGameState();
+    });
+
+    // Reset button
+    resetBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        resetGame();
+    });
+    resetBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        resetGame();
+    });
+}
+
+// Keyboard events
 document.addEventListener('keydown', (e) => {
     if (e.key === 'ArrowUp') keys.ArrowUp = true;
     if (e.key === 'ArrowDown') keys.ArrowDown = true;
@@ -66,9 +148,25 @@ document.addEventListener('keyup', (e) => {
     if (e.key === 'ArrowDown') keys.ArrowDown = false;
 });
 
+// Mouse events
 canvas.addEventListener('mousemove', (e) => {
     const rect = canvas.getBoundingClientRect();
     keys.mouseY = e.clientY - rect.top;
+});
+
+// Touch events for direct canvas touch control (alternative to buttons)
+canvas.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+    const touch = e.touches[0];
+    const rect = canvas.getBoundingClientRect();
+    keys.mouseY = touch.clientY - rect.top;
+});
+
+canvas.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    const touch = e.touches[0];
+    const rect = canvas.getBoundingClientRect();
+    keys.mouseY = touch.clientY - rect.top;
 });
 
 // Game functions
@@ -101,16 +199,17 @@ function resetGame() {
 function resetBall() {
     ball.x = canvas.width / 2;
     ball.y = canvas.height / 2;
-    ball.dx = ballSpeedInitial * (Math.random() > 0.5 ? 1 : -1);
-    ball.dy = ballSpeedInitial * (Math.random() > 0.5 ? 1 : -1);
+    const speed = ballSpeedInitial;
+    ball.dx = speed * (Math.random() > 0.5 ? 1 : -1);
+    ball.dy = speed * (Math.random() > 0.5 ? 1 : -1);
 }
 
 function updateGameStatus() {
     const statusElement = document.getElementById('gameStatus');
     if (!gameRunning) {
-        statusElement.textContent = 'Press SPACE to Start';
+        statusElement.textContent = isMobile ? 'TAP START' : 'Press SPACE to Start';
     } else if (gamePaused) {
-        statusElement.textContent = 'PAUSED - Press SPACE to Resume';
+        statusElement.textContent = isMobile ? 'PAUSED' : 'PAUSED - Press SPACE';
     } else {
         statusElement.textContent = 'PLAYING...';
     }
@@ -123,13 +222,24 @@ function updateScoreboard() {
 
 // Movement functions
 function movePlayerPaddle() {
-    // Mouse control
-    let targetY = keys.mouseY - paddleHeight / 2;
+    let targetY = playerPaddle.y;
 
-    // Arrow key control (overrides mouse if used)
+    // Mouse control
+    if (keys.mouseY !== canvas.height / 2) {
+        targetY = keys.mouseY - paddleHeight / 2;
+    }
+
+    // Arrow key control
     if (keys.ArrowUp) {
         targetY = playerPaddle.y - paddleSpeed;
     } else if (keys.ArrowDown) {
+        targetY = playerPaddle.y + paddleSpeed;
+    }
+
+    // Touch button control
+    if (keys.touchUp) {
+        targetY = playerPaddle.y - paddleSpeed;
+    } else if (keys.touchDown) {
         targetY = playerPaddle.y + paddleSpeed;
     }
 
@@ -140,11 +250,11 @@ function movePlayerPaddle() {
 function moveComputerPaddle() {
     // Simple AI: follow the ball
     const computerCenter = computerPaddle.y + paddleHeight / 2;
-    const difficulty = 0.08; // Adjust for difficulty (higher = easier)
+    const deadZone = paddleHeight * 0.35;
 
-    if (computerCenter < ball.y - 35) {
+    if (computerCenter < ball.y - deadZone) {
         computerPaddle.y += paddleSpeed;
-    } else if (computerCenter > ball.y + 35) {
+    } else if (computerCenter > ball.y + deadZone) {
         computerPaddle.y -= paddleSpeed;
     }
 
@@ -163,7 +273,7 @@ function checkPaddleCollision(paddle) {
         // Calculate collision angle based on where ball hits paddle
         const collidePoint = ball.y - (paddle.y + paddle.height / 2);
         const collideNorm = collidePoint / (paddle.height / 2);
-        const bounceAngle = collideNorm * (Math.PI / 4); // 45 degrees max angle
+        const bounceAngle = collideNorm * (Math.PI / 4);
 
         // Increase ball speed slightly
         const speed = Math.sqrt(ball.dx * ball.dx + ball.dy * ball.dy) * 1.05;
@@ -185,7 +295,6 @@ function checkPaddleCollision(paddle) {
 }
 
 function checkWallCollision() {
-    // Top and bottom wall collision
     if (ball.y - ball.radius < 0) {
         ball.y = ball.radius;
         ball.dy *= -1;
@@ -243,7 +352,7 @@ function drawCircle(x, y, radius, color) {
 
 function drawCenterLine() {
     ctx.strokeStyle = 'rgba(0, 255, 136, 0.3)';
-    ctx.setLineDash([10, 10]);
+    ctx.setLineDash([canvas.width * 0.02, canvas.width * 0.02]);
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(canvas.width / 2, 0);
@@ -283,6 +392,8 @@ function gameLoop() {
     }
 }
 
-// Initial draw
+// Initialize
+showMobileControls();
+setupMobileControls();
 draw();
 updateGameStatus();
